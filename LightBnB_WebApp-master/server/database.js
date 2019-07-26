@@ -147,7 +147,7 @@ const getAllProperties = function(options, limit = 10) {
   }
 
   if (options.owner_id) {
-    queryParams.push(`${options.owner_id}`);
+    queryParams.push(options.owner_id);
     queryString += `WHERE owner_id = $${queryParams.length} `;
   }
 
@@ -198,9 +198,18 @@ exports.getAllProperties = getAllProperties;
  * @return {Promise<{}>} A promise to the property.
  */
 const addProperty = function(property) {
-  const propertyId = Object.keys(properties).length + 1;
-  property.id = propertyId;
-  properties[propertyId] = property;
-  return Promise.resolve(property);
+  
+  return pool.query(`
+  INSERT INTO properties (${Object.keys(property)})
+  VALUES (${Object.values(property).map((value, index) => `$${index + 1}`)})
+  RETURNING *;
+  `, Object.values(property))
+  .then(res => res.rows[0]);
+  
+  
+  // const propertyId = Object.keys(properties).length + 1;
+  // property.id = propertyId;
+  // properties[propertyId] = property;
+  // return Promise.resolve(property);
 }
 exports.addProperty = addProperty;
